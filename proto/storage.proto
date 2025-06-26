@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+package tritontube;
+
+option go_package = "internal/proto;proto";
+
+service VideoContentService {
+  rpc Write(WriteRequest) returns (WriteResponse);
+  rpc Read(ReadRequest) returns (ReadResponse);
+  rpc ListKeys(ListKeysRequest) returns (ListKeysResponse);
+  rpc Delete(DeleteRequest) returns (DeleteResponse);
+}
+
+message WriteRequest {
+  string video_id = 1;
+  string filename = 2;
+  bytes data = 3;
+}
+
+message WriteResponse {}
+
+message ReadRequest {
+  string video_id = 1;
+  string filename = 2;
+}
+
+message ReadResponse {
+  bytes data = 1;
+}
+
+message ListKeysRequest {}
+
+message ListKeysResponse {
+  repeated string keys = 1;
+}
+
+message DeleteRequest {
+  string video_id = 1;
+  string filename = 2;
+}
+
+message DeleteResponse {}
