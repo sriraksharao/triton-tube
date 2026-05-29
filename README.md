@@ -1,28 +1,67 @@
 # triton-tube
-
+A YouTube-like video platform built from scratch in Go — users can upload videos, which are automatically processed and streamed in the browser. Built to handle scale by distributing video storage across multiple servers. 
 A distributed video streaming platform written in Go. Videos are uploaded, transcoded to MPEG-DASH via ffmpeg, and served over HTTP. Content storage can be local filesystem or a distributed network of storage nodes using consistent hashing.
 
+## What it does
+
+- **Upload videos** through a web interface
+- **Automatically transcodes** them into a streaming-friendly format (MPEG-DASH) using ffmpeg, similar to how YouTube processes videos after upload
+- **Streams video** directly in the browser with no plugins required
+- **Stores video data across multiple servers** and automatically rebalances files when servers are added or removed — no downtime, no manual work
+
+## Key technical highlights
+
+| Concept | What was built |
+|---|---|
+| Distributed storage | Video chunks are spread across multiple storage nodes using a **consistent hash ring** — the same technique used by large-scale systems like Amazon DynamoDB |
+| Automatic data migration | When a storage node is added or removed, files are automatically moved to the right place with zero data loss |
+| Microservices | Three separate services (web server, storage nodes, admin CLI) communicate over **gRPC**, a high-performance protocol used in production systems at Google, Netflix, and others |
+| Video processing | Raw uploads are transcoded with ffmpeg into segmented DASH format, enabling adaptive streaming |
+| Pluggable backends | Metadata can be stored in SQLite (single-server) or etcd (distributed), and content storage can be local disk or network nodes — swap them out without changing the rest of the code |
+
+
 ## Architecture
+```
+  Browser
+     │  HTTP
+     ▼
+ Web Server          ← handles uploads, transcoding, and video playback
+     │  gRPC
+     ▼
+ Storage Nodes       ← store video chunks, spread across machines
+     ▲
+ Admin CLI           ← add/remove storage nodes on the fly
+```
 
 ```
 ┌─────────────┐        ┌──────────────────────────────────┐
-│   Browser   │◄──────►│         Web Server (cmd/web)      │
-└─────────────┘  HTTP  │  - Upload & transcode videos      │
-                        │  - Serve DASH manifests & chunks  │
-                        │  - Metadata via SQLite or etcd    │
-                        └────────────┬─────────────────────┘
+│   Browser   │◄──────►│         Web Server (cmd/web)     │
+└─────────────┘  HTTP  │  - Upload & transcode videos     │
+                       │  - Serve DASH manifests & chunks │
+                       │  - Metadata via SQLite or etcd   │
+                       └────────────┬─────────────────────┘
                                      │ gRPC
                         ┌────────────▼─────────────────────┐
-                        │      Storage Nodes (cmd/storage)  │
-                        │  - Consistent hash ring           │
-                        │  - Automatic file migration       │
+                        │      Storage Nodes (cmd/storage) │
+                        │  - Consistent hash ring          │
+                        │  - Automatic file migration      │
                         └──────────────────────────────────┘
                                      ▲
                         ┌────────────┴─────────────────────┐
-                        │    Admin CLI (cmd/admin)          │
-                        │  - Add / remove nodes at runtime  │
+                        │    Admin CLI (cmd/admin)         │
+                        │  - Add / remove nodes at runtime │
                         └──────────────────────────────────┘
 ```
+
+## Technologies used
+
+- **Go** — core language
+- **gRPC + Protocol Buffers** — service-to-service communication
+- **ffmpeg** — video transcoding
+- **SQLite / etcd** — metadata storage
+- **MPEG-DASH** — adaptive video streaming standard
+
+---
 
 ## Prerequisites
 
